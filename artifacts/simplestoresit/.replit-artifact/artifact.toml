@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SimpleStoresIT"
+description = "A polished school-project shopping prototype with a searchable multi-category catalog, simulated accounts and checkout, cart persistence, and an admin dashboard for sample products and orders."
+version = "1.0.0"
+id = "artifacts/simplestoresit"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19040
+
+[services.development]
+run = "pnpm --filter @workspace/simplestoresit run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/simplestoresit", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/simplestoresit/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19040"
+BASE_PATH = "/"
