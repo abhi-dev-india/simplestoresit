@@ -364,15 +364,16 @@ function AccountPage() {
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!form.email.trim() || form.password.length < 4 || (mode === 'signup' && !form.name.trim())) {
-      setError(mode === 'signup' ? 'Add your name, email and a password of at least 4 characters.' : 'Enter an email and a password of at least 4 characters.');
+      setError(mode === 'signup' ? 'Add your name, email and a password of at least 4 characters.' : 'Enter a username or email and a password of at least 4 characters.');
       return;
     }
-    const email = form.email.trim().toLowerCase();
+    const identity = form.email.trim().toLowerCase();
+    const email = identity === 'admin' ? 'admin@simplestores.in' : identity;
     if (mode === 'signin' && email === 'admin@simplestores.in' && form.password === 'admin123') {
       const next = { name: 'Demo Admin', email, role: 'admin' as const };
       setUser(next); setDone(true); setError(''); setNotice('Signed in as the demo admin. Admin tools are simulated.'); return;
     }
-    if (mode === 'signin' && email === 'shopper@simplestores.in' && form.password === 'shop123') {
+    if (mode === 'signin' && identity === 'shopper@simplestores.in' && form.password === 'shop123') {
       const next = { name: 'Aarav Mehta', email, role: 'customer' as const };
       setUser(next); setDone(true); setError(''); setNotice('Signed in as the demo customer.'); return;
     }
@@ -395,12 +396,12 @@ function AccountPage() {
       {done && user && <div className="notice" data-testid="status-login-success">Signed in as {user.name}. {user.role === 'admin' ? 'Your admin dashboard is ready.' : 'Your customer account is ready.'}<button className="btn btn-outline" style={{ marginLeft: 12, padding: '6px 10px', fontSize: 11 }} onClick={() => user.role === 'admin' ? navigate('/admin') : navigate('/')} data-testid="button-continue-account">{user.role === 'admin' ? 'Open admin' : 'Start browsing'}</button></div>}
       <form onSubmit={submit} className="form-grid" style={{ gridTemplateColumns: '1fr', gap: 12 }}>
         {mode === 'signup' && <div className="field"><label htmlFor="account-name">Your name</label><input id="account-name" value={form.name} onChange={e => update('name', e.target.value)} data-testid="input-account-name" /></div>}
-        <div className="field"><label htmlFor="account-email">Email</label><input id="account-email" type="email" value={form.email} onChange={e => update('email', e.target.value)} data-testid="input-account-email" /></div>
-        <div className="field"><label htmlFor="account-password">Password</label><input id="account-password" type="password" value={form.password} onChange={e => update('password', e.target.value)} data-testid="input-account-password" /></div>
+        <div className="field"><label htmlFor="account-email">{mode === 'signin' ? 'Email or username' : 'Email'}</label><input id="account-email" type={mode === 'signup' ? 'email' : 'text'} placeholder={mode === 'signin' ? 'admin or your email' : undefined} autoComplete={mode === 'signin' ? 'username' : 'email'} value={form.email} onChange={e => update('email', e.target.value)} data-testid="input-account-email" /></div>
+        <div className="field"><label htmlFor="account-password">Password</label><input id="account-password" type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={form.password} onChange={e => update('password', e.target.value)} data-testid="input-account-password" /></div>
         {error && <div className="error-note" role="alert" data-testid="status-account-error">{error}</div>}
         <button type="submit" className="btn btn-dark" data-testid="button-account-submit">{mode === 'signin' ? 'Sign in to demo' : 'Create demo profile'} <ArrowRight size={15} /></button>
       </form>
-      <div className="demo-banner" style={{ marginTop: 19 }}><strong>Sample sign-in details</strong><br />Customer: shopper@simplestores.in · shop123<br />Admin: admin@simplestores.in · admin123<br /><span>These credentials are for this browser-only prototype.</span></div>
+      <div className="demo-banner" style={{ marginTop: 19 }}><strong>Sample sign-in details</strong><br />Customer: shopper@simplestores.in · shop123<br />Admin: admin · admin123<br /><span>Prototype-only login: credentials are visible in source and are not secure for a real store.</span></div>
     </section>
   </div></main>;
 }
@@ -428,7 +429,7 @@ function AdminPage() {
     const product: Product = { id: `custom-${Date.now()}`, name: newProduct.name.trim(), category: newProduct.category, price: Number(newProduct.price), originalPrice: Number(newProduct.price), description: newProduct.description.trim(), image: 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=700', rating: 4.5, ratingCount: 0, stock: Number(newProduct.stock), unit: newProduct.unit, featured: false };
     setProducts([product, ...products]); setNewProduct({ name: '', category: categories[0], price: '', stock: '', unit: '', description: '' }); setProductError(''); setShowForm(false); setSaved('New product added to your browser inventory.');
   };
-  if (user?.role !== 'admin') return <main className="page"><section className="panel empty-state" style={{ maxWidth: 680, margin: '25px auto' }}><div className="empty-icon"><ShieldCheck size={23} /></div><div className="eyebrow">Simulated admin area</div><h1 className="page-title" style={{ marginTop: 10 }}>Admin sign-in required</h1><p className="page-subtitle">Use the sample admin account to manage prototype products and inspect locally saved orders. No real staff authentication exists.</p><Link className="btn btn-dark" href="/account" style={{ marginTop: 17 }} data-testid="link-admin-signin">Go to demo sign-in <ArrowRight size={15} /></Link><div className="demo-banner" style={{ marginTop: 18, textAlign: 'left' }}>Admin demo: admin@simplestores.in · admin123</div></section></main>;
+  if (user?.role !== 'admin') return <main className="page"><section className="panel empty-state" style={{ maxWidth: 680, margin: '25px auto' }}><div className="empty-icon"><ShieldCheck size={23} /></div><div className="eyebrow">Simulated admin area</div><h1 className="page-title" style={{ marginTop: 10 }}>Admin sign-in required</h1><p className="page-subtitle">Use the sample admin account to manage prototype products and inspect locally saved orders. No real staff authentication exists.</p><Link className="btn btn-dark" href="/account" style={{ marginTop: 17 }} data-testid="link-admin-signin">Go to demo sign-in <ArrowRight size={15} /></Link><div className="demo-banner" style={{ marginTop: 18, textAlign: 'left' }}>Admin demo: admin · admin123</div></section></main>;
   return <main className="page"><div className="eyebrow">Browser-only console · signed in as admin</div><h1 className="page-title">Store desk</h1><p className="page-subtitle">Manage a pretend inventory and inspect the sample orders saved on this device.</p>
     <div className="admin-layout">
       <nav className="admin-nav" aria-label="Admin sections">{(['overview', 'inventory', 'orders'] as const).map(item => <button className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item} data-testid={`button-admin-${item}`}>{item === 'overview' ? 'Overview' : item === 'inventory' ? 'Inventory' : 'Sample orders'}</button>)}</nav>
