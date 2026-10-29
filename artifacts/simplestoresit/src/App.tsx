@@ -68,8 +68,17 @@ function readStorage<T>(key: string, fallback: T): T {
   }
 }
 
-function useSavedState<T>(key: string, fallback: T): [T, (value: T) => void] {
-  const [value, setValue] = useState<T>(() => readStorage(key, fallback));
+function mergeCatalogProducts(savedProducts: Product[]): Product[] {
+  if (!Array.isArray(savedProducts)) return initialProducts;
+  const savedIds = new Set(savedProducts.map(product => product.id));
+  return [...savedProducts, ...initialProducts.filter(product => !savedIds.has(product.id))];
+}
+
+function useSavedState<T>(key: string, fallback: T, migrate?: (stored: T) => T): [T, (value: T) => void] {
+  const [value, setValue] = useState<T>(() => {
+    const stored = readStorage(key, fallback);
+    return migrate ? migrate(stored) : stored;
+  });
   const save = (next: T) => {
     setValue(next);
     try { localStorage.setItem(key, JSON.stringify(next)); } catch { /* storage may be unavailable */ }
@@ -78,7 +87,7 @@ function useSavedState<T>(key: string, fallback: T): [T, (value: T) => void] {
 }
 
 function StoreProvider({ children }: { children: ReactNode }) {
-  const [products, setProducts] = useSavedState(STORAGE.products, initialProducts);
+  const [products, setProducts] = useSavedState(STORAGE.products, initialProducts, mergeCatalogProducts);
   const [cart, setCart] = useSavedState<CartLine[]>(STORAGE.cart, []);
   const [user, setUser] = useSavedState<DemoUser | null>(STORAGE.user, null);
   const [orders, setOrders] = useSavedState<Order[]>(STORAGE.orders, demoOrders);
@@ -220,7 +229,7 @@ function StorePage() {
       {!search && <div className="trust-strip">
         <div className="trust-item"><div className="trust-icon"><Truck size={19} /></div><div><strong>Delivery is pretend</strong><span>Checkout is just for the demo</span></div></div>
         <div className="trust-item"><div className="trust-icon"><ShieldCheck size={19} /></div><div><strong>Safe to explore</strong><span>No real payments or accounts</span></div></div>
-        <div className="trust-item"><div className="trust-icon"><PackageCheck size={19} /></div><div><strong>45 things to browse</strong><span>Fresh finds across 15 aisles</span></div></div>
+        <div className="trust-item"><div className="trust-icon"><PackageCheck size={19} /></div><div><strong>{products.length} things to browse</strong><span>Fresh finds across 15 aisles</span></div></div>
       </div>}
       <section id="catalog">
         <div className="section-head"><div><h2>{search ? 'Search results' : category === 'All' ? 'Browse the shelves' : category}</h2><p>{search ? `${filtered.length} items matching “${search}”` : 'A thoughtfully mixed collection for home, work and play.'}</p></div><span className="tiny-note" data-testid="text-product-count">{filtered.length} products</span></div>
